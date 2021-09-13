@@ -17,7 +17,7 @@ Service to calculate the sale price of products from the Markup index. If the pr
 > Joda Money (money lib)  
 > Kotest (test framework)  
 > Testcontainer (integration test library)  
-> log4j2(logs)  
+> log4j2 (logs)  
 > Swagger/Open API (documentation)  
 > Kafka (messageing)  
 > NATS (messageing/streaming)
