@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  postgres_cadastro:
+    container_name: postgres_products
+    image: postgres:9.6.23-stretch
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: minhasenhasecreta
+    ports:
+      - "5432:5432"
