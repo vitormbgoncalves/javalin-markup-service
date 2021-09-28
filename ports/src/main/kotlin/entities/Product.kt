@@ -16,8 +16,8 @@ data class Product(
   val fixed_expenses: BigDecimal,
   val profit_margin: Double,
   val purchase_date: LocalDate,
-  val created: LocalDateTime,
-  val edited: LocalDateTime
+  val created: LocalDateTime? = null,
+  val edited: LocalDateTime? = null
 ) {
   companion object
 }

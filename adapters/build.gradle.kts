@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
+
 val kotlinLanguage_version: String by rootProject
 val joda_money_version: String by rootProject
 val java_money_version: String by rootProject
@@ -12,7 +14,7 @@ val exposed_version: String by rootProject
 val javalin_version: String by rootProject
 val log4j_version: String by rootProject
 val jetty_version: String by rootProject
-
+val kafka_client_version: String by rootProject
 plugins {
     kotlin("kapt")
 }
@@ -56,7 +58,7 @@ dependencies {
     // Log4j2 Logging
     implementation("org.apache.logging.log4j:log4j-core:$log4j_version")
     implementation("org.apache.logging.log4j:log4j-api:$log4j_version")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version")
+/*    implementation("org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version")*/
 
     // Validation
     implementation("org.glassfish:javax.el:$javax_el_version")
@@ -75,6 +77,9 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-money:$exposed_version")
+
+    // Kafka client Kotlin
+    implementation("io.streamthoughts:kafka-clients-kotlin:$kafka_client_version")
 }
 
 tasks {

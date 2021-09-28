@@ -19,9 +19,8 @@ data class ProductRequestDto(
   val profit_margin: Double,
   val purchase_date: LocalDate,
 ) {
-
-  fun toProduct(id: UUID?) = Product(
-    id = id,
+  fun addProduct() = Product(
+    id = null,
     name = name,
     manufacturer = manufacturer,
     money = Money.of(CurrencyUnit.of(currency), price),
@@ -33,4 +32,19 @@ data class ProductRequestDto(
     created = LocalDateTime.now(),
     edited = LocalDateTime.now()
   )
+  fun updateProduct(id: UUID?) = Product(
+    id = id,
+    name = name,
+    manufacturer = manufacturer,
+    money = Money.of(CurrencyUnit.of(currency), price),
+    quantity = quantity,
+    variable_expenses = variable_expenses,
+    fixed_expenses = fixed_expenses,
+    profit_margin = profit_margin,
+    purchase_date = purchase_date,
+    created = null,
+    edited = null
+  )
 }
+
+

@@ -1,5 +1,9 @@
 package adapters.web.routes.products
 
+import adapters.events.EventFormat
+import adapters.events.PublishEventDTO
+import adapters.events.PublishEventDTO.Companion.fromProductResponseDto
+import adapters.events.kafka.Producer.message
 import adapters.web.config.AsyncRoute
 import adapters.web.config.AsyncRoutes
 import adapters.web.routes.products.dto.ProductListResponseDto
@@ -8,6 +12,7 @@ import adapters.web.routes.products.dto.ProductRequestDto
 import adapters.web.routes.products.dto.ProductResponseDto
 import adapters.web.routes.products.dto.ProductResponseDto.Companion.fromProduct
 import com.reposilite.web.http.ErrorResponse
+import com.reposilite.web.http.error
 import com.reposilite.web.routing.RouteMethod.DELETE
 import com.reposilite.web.routing.RouteMethod.GET
 import com.reposilite.web.routing.RouteMethod.POST
@@ -15,16 +20,20 @@ import com.reposilite.web.routing.RouteMethod.PUT
 import io.javalin.openapi.HttpMethod
 import io.javalin.openapi.OpenApi
 import io.javalin.openapi.OpenApiContent
+import io.javalin.openapi.OpenApiParam
 import io.javalin.openapi.OpenApiRequestBody
 import io.javalin.openapi.OpenApiResponse
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import ports.input.ProductUseCases
+import ports.output.repository.ProductNotFoundException
+import java.sql.Timestamp
 import java.util.UUID
 
-internal class ProductRoutes : KoinComponent, AsyncRoutes() {
+internal class ProductRoutes() : KoinComponent, AsyncRoutes() {
 
   private val productUseCases by inject<ProductUseCases>()
+  private val producer = message()
 
   @OpenApi(
     path = "/products",
@@ -39,7 +48,7 @@ internal class ProductRoutes : KoinComponent, AsyncRoutes() {
         content = [ OpenApiContent(from = ProductResponseDto::class) ]
       ),
       OpenApiResponse(
-        status = "401",
+        status = "404",
         description = "Not found",
         content = [ OpenApiContent(from = IllegalStateException::class) ]
       )
@@ -47,32 +56,18 @@ internal class ProductRoutes : KoinComponent, AsyncRoutes() {
     requestBody = OpenApiRequestBody(content = [ OpenApiContent(from = ProductRequestDto::class) ])
   )
   private val addProduct = AsyncRoute("/products", POST) {
-    val product = ctx.bodyAsClass<ProductRequestDto>().toProduct(null)
-    response = productUseCases.addProduct(product)
-  }
-
-  @OpenApi(
-    path = "/products/{id}",
-    methods = [HttpMethod.GET],
-    summary = "Get Product",
-    description = "Return product",
-    tags = [ "Product" ],
-    responses = [
-      OpenApiResponse(
-        status = "200",
-        description = "Product found!",
-        content = [ OpenApiContent(from = ProductResponseDto::class) ]
-      ),
-      OpenApiResponse(
-        status = "401",
-        description = "Not found",
-        content = [ OpenApiContent(from = ErrorResponse::class) ]
+    val requestBody = ctx.bodyAsClass<ProductRequestDto>().addProduct()
+    val registration = productUseCases.addProduct(requestBody)
+    val responseBody: ProductResponseDto = fromProduct(registration)
+    response = responseBody
+    producer.send(
+      key = "addProduct",
+      value = EventFormat(
+        eventType = "insert",
+        data = fromProductResponseDto(responseBody),
+        timestamp = Timestamp(System.currentTimeMillis())
       )
-    ]
-  )
-  private val getProductById = AsyncRoute("/products/{id}", GET) {
-    val product = productUseCases.getProductById(UUID.fromString(ctx.pathParam("id")))
-    response = fromProduct(product!!)
+    )
   }
 
   @OpenApi(
@@ -88,7 +83,7 @@ internal class ProductRoutes : KoinComponent, AsyncRoutes() {
         content = [ OpenApiContent(from = ProductListResponseDto::class) ]
       ),
       OpenApiResponse(
-        status = "401",
+        status = "404",
         description = "Not found",
         content = [ OpenApiContent(from = ErrorResponse::class) ]
       )
@@ -101,10 +96,42 @@ internal class ProductRoutes : KoinComponent, AsyncRoutes() {
 
   @OpenApi(
     path = "/products/{id}",
+    methods = [HttpMethod.GET],
+    summary = "Get Product",
+    description = "Return product",
+    tags = [ "Product" ],
+    pathParams = [ OpenApiParam("id") ],
+    responses = [
+      OpenApiResponse(
+        status = "200",
+        description = "Product found!",
+        content = [ OpenApiContent(from = ProductResponseDto::class) ]
+      ),
+      OpenApiResponse(
+        status = "404",
+        description = "Not found",
+        content = [ OpenApiContent(from = ErrorResponse::class) ]
+      )
+    ]
+  )
+  private val getProductById = AsyncRoute("/products/{id}", GET) {
+    try {
+      val id = ctx.pathParam("id")
+      response = fromProduct(productUseCases.getProductById(UUID.fromString(id))!!)
+    } catch (e: ProductNotFoundException) {
+      ctx.error(ErrorResponse(404, e.detail))
+    } catch (e: IllegalStateException) {
+      ctx.error(ErrorResponse(404, e.stackTraceToString()))
+    }
+  }
+
+  @OpenApi(
+    path = "/products/{id}",
     methods = [HttpMethod.PUT],
     summary = "Update Product",
     description = "Update product",
     tags = [ "Product" ],
+    pathParams = [ OpenApiParam("id") ],
     responses = [
       OpenApiResponse(
         status = "200",
@@ -112,16 +139,31 @@ internal class ProductRoutes : KoinComponent, AsyncRoutes() {
         content = [ OpenApiContent(from = ProductResponseDto::class) ]
       ),
       OpenApiResponse(
-        status = "401",
+        status = "404",
         description = "Not found",
         content = [ OpenApiContent(from = ErrorResponse::class) ]
       )
-    ]
+    ],
+    requestBody = OpenApiRequestBody(content = [ OpenApiContent(from = ProductRequestDto::class) ])
   )
   private val updateProduct = AsyncRoute("/products/{id}", PUT) {
-    val id = UUID.fromString(ctx.pathParam("id"))
-    val product = ctx.bodyAsClass<ProductRequestDto>().toProduct(id)
-    response = productUseCases.updateProduct(id, product)
+    try {
+      val id = UUID.fromString(ctx.pathParam("id"))
+      val requestBody = ctx.bodyAsClass<ProductRequestDto>().updateProduct(id)
+      val update = productUseCases.updateProduct(requestBody)
+      val responseBody: ProductResponseDto = fromProduct(update!!)
+      response = responseBody
+      producer.send(
+        key = "updateProduct",
+        value = EventFormat(
+          eventType = "update",
+          data = fromProductResponseDto(responseBody),
+          timestamp = Timestamp(System.currentTimeMillis())
+        )
+      )
+    } catch (e: ProductNotFoundException) {
+      ctx.error(ErrorResponse(404, e.detail))
+    }
   }
 
   @OpenApi(
@@ -130,22 +172,36 @@ internal class ProductRoutes : KoinComponent, AsyncRoutes() {
     summary = "Delete Product",
     description = "Delete product",
     tags = [ "Product" ],
+    pathParams = [ OpenApiParam("id") ],
     responses = [
       OpenApiResponse(
-        status = "200",
+        status = "204",
         description = "Product deleted!",
-        content = [ OpenApiContent(from = ProductResponseDto::class) ]
+        content = [ OpenApiContent(from = Unit::class) ]
       ),
       OpenApiResponse(
-        status = "401",
+        status = "404",
         description = "Not found",
         content = [ OpenApiContent(from = ErrorResponse::class) ]
       )
     ]
   )
   private val deleteProduct = AsyncRoute("/products/{id}", DELETE) {
-    val id = UUID.fromString(ctx.pathParam("id"))
-    response = productUseCases.deleteProduct(id)
+    try {
+      val id = UUID.fromString(ctx.pathParam("id"))
+      response = productUseCases.deleteProduct(id)
+      ctx.status(204)
+      producer.send(
+        key = "deleteProduct",
+        value = EventFormat(
+          eventType = "delete",
+          data = PublishEventDTO(id = id),
+          timestamp = Timestamp(System.currentTimeMillis())
+        )
+      )
+    } catch (e: ProductNotFoundException) {
+      ctx.error(ErrorResponse(404, e.detail))
+    }
   }
 
   override val routes = setOf(addProduct, getProductById, getAllProduct, updateProduct, deleteProduct)

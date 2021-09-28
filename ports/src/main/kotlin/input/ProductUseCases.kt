@@ -7,6 +7,6 @@ interface ProductUseCases {
   suspend fun addProduct(product: Product): Product
   suspend fun getAllProduct(): List<Product>
   suspend fun getProductById(id: UUID): Product?
-  suspend fun updateProduct(id: UUID, product: Product): Product?
+  suspend fun updateProduct(product: Product): Product?
   suspend fun deleteProduct(id: UUID)
 }

@@ -1,6 +1,6 @@
 package adapters.database.products
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.`java-time`.date
 import org.jetbrains.exposed.sql.`java-time`.datetime
 import org.joda.money.Money
@@ -10,9 +10,8 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 // --- TABLE
-internal object Products : Table("products") {
-  val id = uuid("id")
-  val name = text("name").index()
+internal object Products : UUIDTable("products") {
+  val name = text("name")
   val manufacturer = text("manufacturer")
   val price = decimal("price", 10, 2)
   val currency = text("currency").index()
@@ -24,11 +23,9 @@ internal object Products : Table("products") {
   val created = datetime("created_date")
   val edited = datetime("edited_date")
 
-  override val primaryKey = PrimaryKey(id, name = "PK_product_id")
-
-  init {
-    index(isUnique = true, columns = arrayOf(name, currency))
-  }
+  /*init {
+    index(isUnique = true, columns = arrayOf(currency))
+  }*/
 }
 
 // --- ENTITY
@@ -42,8 +39,8 @@ data class ProductSQLEntity(
   val fixed_expenses: BigDecimal,
   val profit_margin: Double,
   val purchase_date: LocalDate,
-  val created: LocalDateTime,
-  val edited: LocalDateTime
+  val created: LocalDateTime? = null,
+  val edited: LocalDateTime? = null
 ) {
   companion object
 }

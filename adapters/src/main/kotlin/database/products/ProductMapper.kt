@@ -1,6 +1,5 @@
 package adapters.database.products
 
-import adapters.database.products.Products.quantity
 import ports.entities.Product
 
 internal fun Product.Companion.fromProductSQLEntity(

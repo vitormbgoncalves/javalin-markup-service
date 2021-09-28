@@ -41,6 +41,8 @@ val adapterModule = module(createdAtStart = true) {
   single {
     AppConfig(configRepository = get())
   }
+
+  // Javalin server start
   single {
     JavalinWebServer().start()
   }

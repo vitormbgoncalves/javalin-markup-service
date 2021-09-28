@@ -13,6 +13,20 @@ class ProductSQLRepository {
   private val logger = LogManager.getLogger()
 
   @RequiresTransactionContext
+  fun upsert(entity: ProductSQLEntity): ProductSQLEntity {
+    logger.warn("Update/insert! $entity")
+    return Products
+      .pgInsertOrUpdate(Products.id) {
+        entity.toSqlStatement(it)
+      }
+      .resultedValues!!
+      .first()
+      .let {
+        ProductSQLEntity.fromSqlResultRow(it)
+      }
+  }
+
+  @RequiresTransactionContext
   fun getAll(): List<ProductSQLEntity> {
     return Products
       .selectAll()
@@ -32,20 +46,6 @@ class ProductSQLRepository {
         ProductSQLEntity.fromSqlResultRow(it)
       }
       .singleOrNull()
-  }
-
-  @RequiresTransactionContext
-  fun upsert(entity: ProductSQLEntity): ProductSQLEntity {
-    logger.debug("upsert") { "Update/insert $entity for id=${entity.id}" }
-    return Products
-      .pgInsertOrUpdate(Products.id) {
-        entity.toSqlStatement(it)
-      }
-      .resultedValues!!
-      .first()
-      .let {
-        ProductSQLEntity.fromSqlResultRow(it)
-      }
   }
 
   @RequiresTransactionContext

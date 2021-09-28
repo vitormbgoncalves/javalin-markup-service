@@ -1,6 +1,7 @@
 package adapters.database
 
 import adapters.database.products.Products
+import javax.sql.DataSource
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -9,7 +10,6 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.experimental.suspendedTransaction
 import ports.output.repository.RequiresTransactionContext
-import javax.sql.DataSource
 
 class DatabaseConnector(
   dataSource: DataSource,
@@ -23,7 +23,8 @@ class DatabaseConnector(
 
   init {
     runBlocking {
-      @OptIn(RequiresTransactionContext::class) newTransaction {
+      @OptIn(RequiresTransactionContext::class)
+      newTransaction {
         preInitHandler?.invoke(this@DatabaseConnector)
         SchemaUtils.create(*tables)
       }

@@ -34,9 +34,8 @@ data class ProductResponseDto(
           fixed_expenses = fixed_expenses,
           profit_margin = profit_margin,
           purchase_date = purchase_date,
-          created = created,
-          edited = edited
-
+          created = created!!,
+          edited = edited!!
         )
       }
     }

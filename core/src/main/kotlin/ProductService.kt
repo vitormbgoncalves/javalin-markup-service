@@ -24,8 +24,8 @@ class ProductService(private val transactionService: TransactionService, private
   }
 
   @OptIn(RequiresTransactionContext::class)
-  override suspend fun updateProduct(id: UUID, product: Product): Product? = transactionService.transaction {
-    productRepository.update(id, product)
+  override suspend fun updateProduct(product: Product): Product? = transactionService.transaction {
+    productRepository.update(product)
   }
 
   @OptIn(RequiresTransactionContext::class)
