@@ -8,8 +8,10 @@ Service to calculate the sale price of products from the Markup index. If the pr
 > Kotlin (chosen language)  
 > Gradle (build tool)  
 > Javalin (web framework)  
+> Coroutines (asynchronous programming)
 > Hexagonal (architecture)  
 > Exposed (ORM)  
+> HikariCP (JDBC connection pool)
 > CockroachDB (database)  
 > Koin (dependency injection)  
 > Fuel (HTTP client)  
@@ -19,8 +21,7 @@ Service to calculate the sale price of products from the Markup index. If the pr
 > Testcontainer (integration test library)  
 > log4j2 (logs)  
 > Swagger/Open API (documentation)  
-> Kafka (messageing)  
-> NATS (messageing/streaming)
+> Kafka (event streaming)
 
 ## Quick note
 

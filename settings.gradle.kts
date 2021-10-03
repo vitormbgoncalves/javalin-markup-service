@@ -1,9 +1,14 @@
+
 rootProject.name = "javalin-markup-service"
 
-include("ports")
-include("core")
-include("adapters")
-include("app")
+include("registration-service:ports")
+include("registration-service:core")
+include("registration-service:adapters")
+include("registration-service:app")
+include("markup-service:ports")
+include("markup-service:core")
+include("markup-service:adapters")
+include("markup-service:app")
 
 pluginManagement {
 
@@ -24,4 +29,3 @@ pluginManagement {
         }
     }
 }
-

@@ -1,3 +1,4 @@
+
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
@@ -18,9 +19,6 @@ plugins {
 }
 
 allprojects {
-
-    group = "com.github.vitormbgoncalves"
-    version = "1.0-SNAPSHOT"
 
     repositories {
         mavenCentral()
